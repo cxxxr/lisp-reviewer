@@ -7,7 +7,7 @@
            :reviewer-reporter))
 (in-package :reviewer/reviewer)
 
-(defgeneric review (reviewer pathname))
+(defgeneric review (reviewer point))
 
 (defclass reviewer ()
   ((reporter

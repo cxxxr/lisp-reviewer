@@ -12,7 +12,8 @@
 
 (defmethod comment-to-string ((object comment))
   (let ((point (comment-point object)))
-    (format t "~D:~D:~A~%"
+    (format t "~A:~D:~D:~A~%"
+            (lem-base:buffer-filename (lem-base:point-buffer point))
             (lem-base:line-number-at-point point)
             (lem-base:point-column point)
             (type-of object))))
