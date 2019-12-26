@@ -8,9 +8,10 @@
 (defun read-form (point)
   (lem-base:skip-space-and-comment-forward point)
   (lem-base:with-point ((start point))
-    (lem-base:form-offset point 1)
-    (values (read-from-string (lem-base:points-to-string start point))
-            start)))
+    (if (lem-base:form-offset point 1)
+        (values (read-from-string (lem-base:points-to-string start point) )
+                start)
+        (values nil nil))))
 
 (defun backward-delete-form (point)
   (lem-base:with-point ((end point :left-inserting))
