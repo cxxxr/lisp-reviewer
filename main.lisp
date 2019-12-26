@@ -11,7 +11,7 @@
 
 (defclass header-in-package-reviewer (reviewer) ())
 
-(defmethod review ((reviewer header-in-package-reviewer) point)
+(defmethod review progn ((reviewer header-in-package-reviewer) point)
   (lem-base:buffer-start point)
   (multiple-value-bind (first-form form-point)
       (read-form point)
@@ -29,21 +29,41 @@
 
 (defclass defpackage-reviewer (reviewer) ())
 
-(defmethod review ((reviewer defpackage-reviewer) point)
-  (lem-base:buffer-start point)
-  (loop
-    (multiple-value-bind (form form-point)
-        (read-form point)
-      (unless form-point (return))
-      (optima:match form
-        ((list* 'defpackage package-name options)
-         (pprint package-name)
-         (pprint options)
-         (return))))))
+(defvar *package-info-list* '())
+
+(defstruct package-info
+  name
+  import-from-list)
+
+(defmethod review progn ((reviewer defpackage-reviewer) point)
+  (let ((*package-info-list* '()))
+    (lem-base:buffer-start point)
+    (loop
+      (multiple-value-bind (form form-point)
+          (read-form point)
+        (unless form-point (return))
+        (optima:match form
+          ((list* 'defpackage package-name options)
+           (let ((import-from-list '()))
+             (dolist (option options)
+               (alexandria:destructuring-case option
+                 ((:import-from package-name &rest import-names)
+                  (push (cons (string package-name)
+                              (mapcar #'string import-names))
+                        import-from-list))))
+             (push (make-package-info :name package-name
+                                      :import-from-list import-from-list)
+                   *package-info-list*))
+           (return)))))
+    (pprint *package-info-list*)))
+
+(defclass main-reviewer (header-in-package-reviewer
+                         defpackage-reviewer)
+  ())
 
 (defun review-file (reviewer pathname)
   (let* ((buffer (lem-base:find-file-buffer pathname :temporary t :enable-undo-p nil))
          (point (lem-base:buffer-point buffer)))
     (review reviewer point)
-    (lem-base:write-to-file buffer (lem-base:buffer-filename buffer)))
-  (values))
+    ;; (lem-base:write-to-file buffer (lem-base:buffer-filename buffer))
+    ))

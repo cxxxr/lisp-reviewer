@@ -4,7 +4,8 @@
            :reviewer))
 (in-package :reviewer/reviewer)
 
-(defgeneric review (reviewer point))
+(defgeneric review (reviewer point)
+  (:method-combination progn))
 
 (defclass reviewer ()
   ())
