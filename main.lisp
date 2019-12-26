@@ -4,11 +4,10 @@
   (:use :cl
         :reviewer/utilities
         :reviewer/comment
-        :reviewer/reporter
         :reviewer/reviewer))
 (in-package :reviewer/main)
 
-(defclass |先頭に(in-package :cl-user)が存在する| (comment) ())
+(define-condition |先頭に(in-package :cl-user)が存在する| (comment) ())
 
 (defclass package-reviewer (reviewer) ())
 
@@ -20,12 +19,17 @@
       ((list 'in-package package-name)
        (alexandria:when-let (package (find-package package-name))
          (when (string= (package-name package) "COMMON-LISP-USER")
-           (report (reviewer-reporter reviewer)
-                   (make-instance '|先頭に(in-package :cl-user)が存在する|
-                                  :point form-point))))))))
+           (restart-case (error (make-condition '|先頭に(in-package :cl-user)が存在する|
+                                                :point form-point))
+             (skip ())
+             (fix ()
+               :report "このフォームを削除する"
+               (backward-delete-form point)
+               (lem-base:delete-character point 1)))))))))
 
 (defun review-file (pathname)
   (let* ((buffer (lem-base:find-file-buffer pathname :temporary t :enable-undo-p nil))
          (point (lem-base:buffer-point buffer)))
-    (review (make-instance 'package-reviewer) point))
+    (review (make-instance 'package-reviewer) point)
+    (lem-base:write-to-file buffer (lem-base:buffer-filename buffer)))
   (values))
