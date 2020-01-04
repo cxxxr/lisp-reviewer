@@ -9,6 +9,15 @@
         :reviewer/reviewer))
 (in-package :reviewer/main)
 
+(defun get-file-from-point (point)
+  (lem-base:buffer-filename (lem-base:point-buffer point)))
+
+(defun make-condition-using-point (type point)
+  (make-condition type
+                  :line-number (lem-base:line-number-at-point point)
+                  :column (lem-base:point-column point)
+                  :file (get-file-from-point point)))
+
 (define-condition |先頭に(in-package :cl-user)が存在する| (comment) ())
 
 (defclass header-in-package-reviewer (reviewer) ())
@@ -22,17 +31,19 @@
        (alexandria:when-let (package (find-package package-name))
          (when (string= (package-name package) "COMMON-LISP-USER")
            (restart-case
-               (error (make-condition '|先頭に(in-package :cl-user)が存在する|
-                                      :line-number (lem-base:line-number-at-point form-point)
-                                      :column (lem-base:point-column form-point)
-                                      :pathname (lem-base:buffer-filename
-                                                 (lem-base:point-buffer point))))
+               (error (make-condition-using-point
+                       '|先頭に(in-package :cl-user)が存在する|
+                       form-point))
              (ignore ()
                :report "Ignore report")
              (edit ()
                :report "このフォームを削除する"
                (backward-delete-form point)
                (lem-base:delete-character point 1)))))))))
+
+(define-condition |一つのファイルにdefpackageが二つ存在する| (comment) ())
+(define-condition |defpackageが存在しない| (comment) ())
+(define-condition |importしたシンボルは使われていない| (comment) ())
 
 (defclass defpackage-reviewer (reviewer) ())
 
@@ -59,7 +70,8 @@
     import-from-list))
 
 (defmethod review progn ((reviewer defpackage-reviewer) point)
-  (let ((package-info-list '()))
+  (let ((package-info nil)
+        (file (get-file-from-point point)))
     (lem-base:buffer-start point)
     (loop
       (multiple-value-bind (form form-point)
@@ -67,16 +79,28 @@
         (unless form-point (return))
         (optima:match form
           ((list* 'defpackage package-name options)
+           (when package-info
+             (error (make-condition-using-point '|一つのファイルにdefpackageが二つ存在する| form-point)))
            (let ((import-from-list (normalize-import-from options)))
-             (push (make-package-info
+             (setq package-info
+                   (make-package-info
                     :name package-name
                     :import-from-list (dolist (elt import-from-list import-from-list)
                                         (setf (cdr elt)
                                               (delete-duplicates (cdr elt)
-                                                                 :test #'string=))))
-                   package-info-list))
-           (return)))))
-    package-info-list))
+                                                                 :test #'string=)))))
+             (loop :for (package-name . import-names) :in (package-info-import-from-list package-info)
+                   :do (dolist (import-name import-names)
+                         (unless (member file
+                                         (reviewer/utilities::xrefs
+                                          (swank:xrefs '(:calls :macroexpands :binds
+                                                         :references :sets :specializes)
+                                                       import-name))
+                                         :test #'uiop:pathname-equal)
+                           (error (make-condition-using-point '|importしたシンボルは使われていない|
+                                                              form-point))))))))))
+    (unless package-info
+      (error (make-condition '|defpackageが存在しない|)))))
 
 (define-condition sblint-comment (comment)
   ())
