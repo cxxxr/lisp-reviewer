@@ -1,18 +1,24 @@
 (defpackage :reviewer/comment
   (:use :cl)
-  (:import-from :lem-base)
   (:export :comment))
 (in-package :reviewer/comment)
 
 (defgeneric comment-to-string (object))
 
 (define-condition comment (simple-condition)
-  ((point :initarg :point
-          :reader comment-point))
+  ((line-number :initarg :line-number
+                :reader comment-line-number)
+   (column :initarg :column
+           :reader comment-column)
+   (file :initarg :file
+         :reader comment-file)
+   (description :initarg :description
+                :initform nil
+                :reader comment-description))
   (:report (lambda (condition stream)
-             (let ((point (comment-point condition)))
-               (format stream "~A:~D:~D:~A~%"
-                       (lem-base:buffer-filename (lem-base:point-buffer point))
-                       (lem-base:line-number-at-point point)
-                       (lem-base:point-column point)
-                       (type-of condition))))))
+             (format stream "~A:~D:~D:~A~%"
+                     (comment-file condition)
+                     (comment-line-number condition)
+                     (comment-column condition)
+                     (or (comment-description condition)
+                         (type-of condition))))))

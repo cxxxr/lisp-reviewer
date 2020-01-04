@@ -9,11 +9,31 @@
   (lem-base:skip-space-and-comment-forward point)
   (lem-base:with-point ((start point))
     (if (lem-base:form-offset point 1)
-        (values (read-from-string (lem-base:points-to-string start point) )
-                start)
+        (let* ((eof '#:eof)
+               (form (read-from-string (lem-base:points-to-string start point) nil eof)))
+          (if (eq form eof)
+              (values nil nil)
+              (values form start)))
         (values nil nil))))
 
 (defun backward-delete-form (point)
   (lem-base:with-point ((end point :left-inserting))
     (lem-base:form-offset point -1)
     (lem-base:delete-between-points point end)))
+
+(defun xrefs (xrefs)
+  (loop :with files := '()
+        :for (type . definitions) :in xrefs
+        :do (loop :for definition :In definitions
+                  :do (destructuring-bind (ref-name location) definition
+                        (declare (ignore ref-name))
+                        (alexandria:destructuring-ecase location
+                          ((:location location _position _hints)
+                           (declare (ignore _position _hints))
+                           (alexandria:destructuring-case location
+                             ((:file file)
+                              (push file files))
+                             ((:buffer-and-file _buffer file)
+                              (declare (ignore _buffer))
+                              (push file files)))))))
+        :finally (return files)))
