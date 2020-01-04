@@ -91,11 +91,7 @@
                                                                  :test #'string=)))))
              (loop :for (package-name . import-names) :in (package-info-import-from-list package-info)
                    :do (dolist (import-name import-names)
-                         (unless (member file
-                                         (reviewer/utilities::xrefs
-                                          (swank:xrefs '(:calls :macroexpands :binds
-                                                         :references :sets :specializes)
-                                                       import-name))
+                         (unless (member file (xrefs import-name)
                                          :test #'uiop:pathname-equal)
                            (error (make-condition-using-point '|importしたシンボルは使われていない|
                                                               form-point))))))))))

@@ -2,7 +2,9 @@
   (:use :cl)
   (:import-from :lem-base)
   (:export :read-form
-           :backward-delete-form))
+           :backward-delete-form
+           :get-file-from-point
+           :xrefs))
 (in-package :reviewer/utilities)
 
 (defun read-form (point)
@@ -21,9 +23,15 @@
     (lem-base:form-offset point -1)
     (lem-base:delete-between-points point end)))
 
-(defun xrefs (xrefs)
+(defun get-file-from-point (point)
+  (lem-base:buffer-filename (lem-base:point-buffer point)))
+
+(defun xrefs (name)
   (loop :with files := '()
-        :for (type . definitions) :in xrefs
+        :for (type . definitions)
+        :in (swank:xrefs '(:calls :macroexpands :binds
+                           :references :sets :specializes)
+                         name)
         :do (loop :for definition :In definitions
                   :do (destructuring-bind (ref-name location) definition
                         (declare (ignore ref-name))
