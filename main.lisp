@@ -9,15 +9,20 @@
         :reviewer/reviewer))
 (in-package :reviewer/main)
 
-(defun get-file-from-point (point)
-  (lem-base:buffer-filename (lem-base:point-buffer point)))
+(defmacro reporter-restart-case (expression &body clauses)
+  `(restart-case ,expression
+     (ignore ()
+       :report "このレポートを無視する")
+     ,@clauses))
 
-(defun make-condition-using-point (type point)
-  (make-condition type
-                  :line-number (lem-base:line-number-at-point point)
-                  :column (lem-base:point-column point)
-                  :file (get-file-from-point point)))
+(defun make-condition-using-point (type point &rest args)
+  (apply #'make-condition type
+         :line-number (lem-base:line-number-at-point point)
+         :column (lem-base:point-column point)
+         :file (get-file-from-point point)
+         args))
 
+;;;
 (define-condition |先頭に(in-package :cl-user)が存在する| (comment) ())
 
 (defclass header-in-package-reviewer (reviewer) ())
@@ -30,18 +35,17 @@
       ((list 'in-package package-name)
        (alexandria:when-let (package (find-package package-name))
          (when (string= (package-name package) "COMMON-LISP-USER")
-           (restart-case
+           (reporter-restart-case
                (error (make-condition-using-point
                        '|先頭に(in-package :cl-user)が存在する|
                        form-point))
-             (ignore ()
-               :report "Ignore report")
              (edit ()
-               :report "このフォームを削除する"
-               (backward-delete-form point)
-               (lem-base:delete-character point 1)))))))))
+                   :report "このフォームを削除する"
+                   (backward-delete-form point)
+                   (lem-base:delete-character point 1)))))))))
 
-(define-condition |一つのファイルにdefpackageが二つ存在する| (comment) ())
+;;;
+(define-condition |一つのファイルにdefpackageが複数存在する| (comment) ())
 (define-condition |defpackageが存在しない| (comment) ())
 (define-condition |importしたシンボルは使われていない| (comment) ())
 
@@ -70,8 +74,14 @@
     import-from-list))
 
 (defmethod review progn ((reviewer defpackage-reviewer) point)
+  ;; - defpackageが無い、または複数ある
+  ;; import-fromのレビュー
+  ;; - 存在しないパッケージ、シンボルがある
+  ;; - 重複するシンボルがある、パッケージ指定が重複している場合は一つにまとめる
+  ;; - 使っていないシンボルをimportしている
   (let ((package-info nil)
-        (file (get-file-from-point point)))
+        (file (get-file-from-point point))
+        (delete-import-names '()))
     (lem-base:buffer-start point)
     (loop
       (multiple-value-bind (form form-point)
@@ -80,7 +90,10 @@
         (optima:match form
           ((list* 'defpackage package-name options)
            (when package-info
-             (error (make-condition-using-point '|一つのファイルにdefpackageが二つ存在する| form-point)))
+             ;; TODO: 片方を消すなどの変更案をリスタートにする
+             (reporter-restart-case
+                 (error (make-condition-using-point '|一つのファイルにdefpackageが複数存在する|
+                                                    form-point))))
            (let ((import-from-list (normalize-import-from options)))
              (setq package-info
                    (make-package-info
@@ -91,13 +104,23 @@
                                                                  :test #'string=)))))
              (loop :for (package-name . import-names) :in (package-info-import-from-list package-info)
                    :do (dolist (import-name import-names)
-                         (unless (member file (xrefs import-name)
-                                         :test #'uiop:pathname-equal)
-                           (error (make-condition-using-point '|importしたシンボルは使われていない|
-                                                              form-point))))))))))
+                         (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
+                           (reporter-restart-case
+                               (error (make-condition-using-point
+                                       '|importしたシンボルは使われていない|
+                                       form-point
+                                       :description (format nil
+                                                            "~Aはこのファイル内で使われていません"
+                                                            import-name)))
+                             (edit ()
+                                   :report (lambda (stream)
+                                             (format stream "import-fromから~Aを削除する" import-name))
+                                   (push (list package-name import-name) delete-import-names)))))))))))
     (unless package-info
-      (error (make-condition '|defpackageが存在しない|)))))
+      (error (make-condition '|defpackageが存在しない|)))
+    (defparameter $ delete-import-names)))
 
+;;;
 (define-condition sblint-comment (comment)
   ())
 
@@ -110,13 +133,14 @@
            (with-output-to-string (stream)
              (sblint:run-lint-file file stream))))
     (ppcre:do-register-groups (line-number column description) ("[^:]*:(\\d*):(\\d*):([^\\n]*)" text)
-      (with-simple-restart (ignore "Ignore report")
-        (error (make-condition 'sblint-comment
-                               :file file
-                               :line-number line-number
-                               :column column
-                               :description description))))))
+      (reporter-restart-case
+          (error (make-condition 'sblint-comment
+                                 :file file
+                                 :line-number line-number
+                                 :column column
+                                 :description description))))))
 
+;;;
 (defclass main-reviewer (sblint-reviewer
                          header-in-package-reviewer
                          defpackage-reviewer)
@@ -126,5 +150,5 @@
   (let* ((buffer (lem-base:find-file-buffer pathname :temporary t :enable-undo-p nil))
          (point (lem-base:buffer-point buffer)))
     (review reviewer point)
-    ;; (lem-base:write-to-file buffer (lem-base:buffer-filename buffer))
+    (lem-base:write-to-file buffer (lem-base:buffer-filename buffer))
     ))
