@@ -1,9 +1,11 @@
 (defpackage :reviewer/comment
   (:use :cl)
-  (:export :comment))
+  (:export :comment
+           :write-comment-location
+           :write-comment-message))
 (in-package :reviewer/comment)
 
-(defgeneric comment-to-string (object))
+(defgeneric write-comment-message (comment stream))
 
 (define-condition comment (simple-condition)
   ((line-number :initarg :line-number
@@ -11,14 +13,21 @@
    (column :initarg :column
            :reader comment-column)
    (file :initarg :file
-         :reader comment-file)
-   (description :initarg :description
-                :initform nil
-                :reader comment-description))
+         :reader comment-file))
   (:report (lambda (condition stream)
-             (format stream "~A:~D:~D:~A~%"
-                     (comment-file condition)
-                     (comment-line-number condition)
-                     (comment-column condition)
-                     (or (comment-description condition)
-                         (type-of condition))))))
+             (write-comment-message condition stream)
+             (terpri stream))))
+
+(defun write-comment-location (comment stream)
+  (format stream "~A:~D:~D:"
+          (comment-file comment)
+          (comment-line-number comment)
+          (comment-column comment)))
+
+(defmethod write-comment-message :before ((comment comment) stream)
+  (write-comment-location comment stream))
+
+(defmethod write-comment-message ((comment comment) stream)
+  (princ (or (comment-description comment)
+             (type-of comment))
+         stream))

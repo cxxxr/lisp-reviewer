@@ -47,7 +47,11 @@
 ;;;
 (define-condition |一つのファイルにdefpackageが複数存在する| (comment) ())
 (define-condition |defpackageが存在しない| (comment) ())
-(define-condition |importしたシンボルは使われていない| (comment) ())
+(define-condition |importしたシンボルは使われていない| (comment)
+  ((unused-symbol :initarg :unused-symbol :reader comment-unused-symbol)))
+
+(defmethod write-comment-message ((comment |importしたシンボルは使われていない|) stream)
+  (format stream "~Aは使われていません" (comment-unused-symbol comment)))
 
 (defclass defpackage-reviewer (reviewer) ())
 
@@ -109,9 +113,7 @@
                                (error (make-condition-using-point
                                        '|importしたシンボルは使われていない|
                                        form-point
-                                       :description (format nil
-                                                            "~Aはこのファイル内で使われていません"
-                                                            import-name)))
+                                       :unused-symbol import-name))
                              (edit ()
                                    :report (lambda (stream)
                                              (format stream "import-fromから~Aを削除する" import-name))
