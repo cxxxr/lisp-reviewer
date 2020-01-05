@@ -97,7 +97,7 @@
               (lem-base:form-offset point 1)
               (return point)))
           (lem-base:scan-lists point 1 1))
-      (lem:editor-error ()
+      (lem-base:editor-error ()
         nil))))
 
 (defun find-import-name (point package-name import-name)
@@ -182,5 +182,5 @@
   (let* ((buffer (lem-base:find-file-buffer pathname :temporary t :enable-undo-p nil))
          (point (lem-base:buffer-point buffer)))
     (review reviewer point)
-    (lem-base:write-to-file buffer (lem-base:buffer-filename buffer))
-    ))
+    (when (lem-base:buffer-modified-p buffer)
+      (lem-base:write-to-file buffer (lem-base:buffer-filename buffer)))))
