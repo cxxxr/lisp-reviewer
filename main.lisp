@@ -129,13 +129,9 @@
              ;; TODO: 片方を消すなどの変更案をリスタートにする
              (reporter-restart-case
                  (error (make-comment-using-point '|一つのファイルにdefpackageが複数存在する|
-                                                    form-point))))
+                                                  form-point))))
            (let ((import-from-list (normalize-import-from options)))
-             (setq package-info
-                   (make-package-info
-                    :name package-name
-                    :import-from-list import-from-list))
-             (loop :for (package-name . import-names) :in (package-info-import-from-list package-info)
+             (loop :for (package-name . import-names) :in import-from-list
                    :do (dolist (import-name import-names)
                          (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
                            (find-import-name form-point package-name import-name)
@@ -147,7 +143,11 @@
                              (edit ()
                                    :report (lambda (stream)
                                              (format stream "import-fromから~Aを削除する" import-name))
-                                   (push (list package-name import-name) delete-import-names)))))))))))
+                                   (push (list package-name import-name) delete-import-names))))))
+             (setq package-info
+                   (make-package-info
+                    :name package-name
+                    :import-from-list import-from-list)))))))
     (unless package-info
       (error (make-condition '|defpackageが存在しない|)))
     (defparameter $ package-info)))
