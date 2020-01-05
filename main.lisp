@@ -16,7 +16,7 @@
        :report "このレポートを無視する")
      ,@clauses))
 
-(defun make-condition-using-point (type point &rest args)
+(defun make-comment-using-point (type point &rest args)
   (apply #'make-condition type
          :line-number (lem-base:line-number-at-point point)
          :column (lem-base:point-column point)
@@ -37,7 +37,7 @@
        (alexandria:when-let (package (find-package package-name))
          (when (string= (package-name package) "COMMON-LISP-USER")
            (reporter-restart-case
-               (error (make-condition-using-point
+               (error (make-comment-using-point
                        '|先頭に(in-package :cl-user)が存在する|
                        form-point))
              (edit ()
@@ -128,7 +128,7 @@
            (when package-info
              ;; TODO: 片方を消すなどの変更案をリスタートにする
              (reporter-restart-case
-                 (error (make-condition-using-point '|一つのファイルにdefpackageが複数存在する|
+                 (error (make-comment-using-point '|一つのファイルにdefpackageが複数存在する|
                                                     form-point))))
            (let ((import-from-list (normalize-import-from options)))
              (setq package-info
@@ -143,7 +143,7 @@
                          (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
                            (find-import-name form-point package-name import-name)
                            (reporter-restart-case
-                               (error (make-condition-using-point
+                               (error (make-comment-using-point
                                        '|importしたシンボルは使われていない|
                                        form-point
                                        :import-name import-name))
