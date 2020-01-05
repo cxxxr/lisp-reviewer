@@ -3,6 +3,7 @@
   (:import-from :lem)
   (:import-from :sblint)
   (:import-from :cl-ppcre)
+  (:import-from :trivia)
   (:use :cl
         :reviewer/utilities
         :reviewer/comment
@@ -31,7 +32,7 @@
   (lem-base:buffer-start point)
   (multiple-value-bind (first-form form-point)
       (read-form point)
-    (optima:match first-form
+    (trivia:match first-form
       ((list 'in-package package-name)
        (alexandria:when-let (package (find-package package-name))
          (when (string= (package-name package) "COMMON-LISP-USER")
@@ -53,7 +54,7 @@
     :reader comment-import-name)))
 
 (defmethod write-comment-message ((comment |importしたシンボルは使われていない|) stream)
-  (format stream "~Aは使われていません" (comment-import-name comment)))
+  (format stream "importした~Aは使われていません" (comment-import-name comment)))
 
 (defclass defpackage-reviewer (reviewer) ())
 
@@ -110,11 +111,10 @@
         (return point)))))
 
 (defmethod review progn ((reviewer defpackage-reviewer) point)
-  ;; - defpackageが無い、または複数ある
-  ;; import-fromのレビュー
-  ;; - 存在しないパッケージ、シンボルがある
-  ;; - 重複するシンボルがある、パッケージ指定が重複している場合は一つにまとめる
-  ;; - 使っていないシンボルをimportしている
+  ;; - [X] defpackageが無い、または複数ある
+  ;; - [ ] import-fromに重複するシンボルがある、パッケージ指定が重複している場合は一つにまとめる
+  ;; - [ ] import-fromに存在しないパッケージ、シンボルがある
+  ;; - [X] import-fromで使っていないシンボルをimportしている
   (let ((package-info nil)
         (file (get-file-from-point point))
         (delete-import-names '()))
@@ -123,7 +123,7 @@
       (multiple-value-bind (form form-point)
           (read-form point)
         (unless form-point (return))
-        (optima:match form
+        (trivia:match form
           ((list* 'defpackage package-name options)
            (when package-info
              ;; TODO: 片方を消すなどの変更案をリスタートにする
@@ -153,7 +153,7 @@
                                    (push (list package-name import-name) delete-import-names)))))))))))
     (unless package-info
       (error (make-condition '|defpackageが存在しない|)))
-    (defparameter $ delete-import-names)))
+    (defparameter $ package-info)))
 
 ;;;
 (define-condition sblint-comment (comment)
