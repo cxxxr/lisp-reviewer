@@ -48,10 +48,12 @@
 (define-condition |一つのファイルにdefpackageが複数存在する| (comment) ())
 (define-condition |defpackageが存在しない| (comment) ())
 (define-condition |importしたシンボルは使われていない| (comment)
-  ((unused-symbol :initarg :unused-symbol :reader comment-unused-symbol)))
+  ((import-name
+    :initarg :import-name
+    :reader comment-import-name)))
 
 (defmethod write-comment-message ((comment |importしたシンボルは使われていない|) stream)
-  (format stream "~Aは使われていません" (comment-unused-symbol comment)))
+  (format stream "~Aは使われていません" (comment-import-name comment)))
 
 (defclass defpackage-reviewer (reviewer) ())
 
@@ -76,6 +78,36 @@
             (delete-duplicates (cdr import-from)
                                :test #'string=)))
     import-from-list))
+
+(defun find-import-from-package (point package-name)
+  (lem-base:with-point ((end point))
+    (lem-base:form-offset end 1)
+    (lem-base:scan-lists point 1 -1)
+    (handler-case
+        (loop
+          (lem-base:scan-lists point 1 -1)
+          (lem-base:skip-whitespace-forward point)
+          (when (string-equal "import-from"
+                              (read-from-string (lem-base:symbol-string-at-point point)))
+            (lem-base:form-offset point 1)
+            (lem-base:skip-whitespace-forward point)
+            (when (string-equal (read-from-string (lem-base:symbol-string-at-point point))
+                                package-name)
+              (lem-base:form-offset point 1)
+              (return point)))
+          (lem-base:scan-lists point 1 1))
+      (lem:editor-error ()
+        nil))))
+
+(defun find-import-name (point package-name import-name)
+  (when (find-import-from-package point package-name)
+    (loop
+      (unless (lem-base:form-offset point 1)
+        (return))
+      (when (string-equal (read-from-string (lem-base:symbol-string-at-point point))
+                          import-name)
+        (lem-base:form-offset point -1)
+        (return point)))))
 
 (defmethod review progn ((reviewer defpackage-reviewer) point)
   ;; - defpackageが無い、または複数ある
@@ -109,11 +141,12 @@
              (loop :for (package-name . import-names) :in (package-info-import-from-list package-info)
                    :do (dolist (import-name import-names)
                          (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
+                           (find-import-name form-point package-name import-name)
                            (reporter-restart-case
                                (error (make-condition-using-point
                                        '|importしたシンボルは使われていない|
                                        form-point
-                                       :unused-symbol import-name))
+                                       :import-name import-name))
                              (edit ()
                                    :report (lambda (stream)
                                              (format stream "import-fromから~Aを削除する" import-name))

@@ -28,6 +28,5 @@
   (write-comment-location comment stream))
 
 (defmethod write-comment-message ((comment comment) stream)
-  (princ (or (comment-description comment)
-             (type-of comment))
+  (princ (type-of comment)
          stream))
