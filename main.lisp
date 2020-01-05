@@ -58,10 +58,6 @@
 
 (defclass defpackage-reviewer (reviewer) ())
 
-(defstruct package-info
-  name
-  import-from-list)
-
 (defun normalize-import-from (options)
   (let ((import-from-list '()))
     (dolist (option options)
@@ -115,42 +111,47 @@
   ;; - [ ] import-fromに重複するシンボルがある、パッケージ指定が重複している場合は一つにまとめる
   ;; - [ ] import-fromに存在しないパッケージ、シンボルがある
   ;; - [X] import-fromで使っていないシンボルをimportしている
-  (let ((package-info nil)
-        (file (get-file-from-point point))
-        (delete-import-names '()))
+  (let ((seen-defpackage nil)
+        (file (get-file-from-point point)))
     (lem-base:buffer-start point)
     (loop
       (multiple-value-bind (form form-point)
           (read-form point)
         (unless form-point (return))
         (trivia:match form
-          ((list* 'defpackage package-name options)
-           (when package-info
-             ;; TODO: 片方を消すなどの変更案をリスタートにする
-             (reporter-restart-case
-                 (error (make-comment-using-point '|一つのファイルにdefpackageが複数存在する|
-                                                  form-point))))
-           (let ((import-from-list (normalize-import-from options)))
+          ((list* 'defpackage _ options)
+           (if seen-defpackage
+               ;; TODO: 片方を消すなどの変更案をリスタートにする
+               (reporter-restart-case
+                   (error (make-comment-using-point
+                           '|一つのファイルにdefpackageが複数存在する|
+                           form-point)))
+               (setf seen-defpackage t))
+           (let ((import-from-list (normalize-import-from options))
+                 (deleting-import-names '()))
              (loop :for (package-name . import-names) :in import-from-list
                    :do (dolist (import-name import-names)
                          (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
-                           (find-import-name form-point package-name import-name)
-                           (reporter-restart-case
-                               (error (make-comment-using-point
-                                       '|importしたシンボルは使われていない|
-                                       form-point
-                                       :import-name import-name))
-                             (edit ()
-                                   :report (lambda (stream)
-                                             (format stream "import-fromから~Aを削除する" import-name))
-                                   (push (list package-name import-name) delete-import-names))))))
-             (setq package-info
-                   (make-package-info
-                    :name package-name
-                    :import-from-list import-from-list)))))))
-    (unless package-info
-      (error (make-condition '|defpackageが存在しない|)))
-    (defparameter $ package-info)))
+                           (lem-base:with-point ((p form-point))
+                             (find-import-name p package-name import-name)
+                             (reporter-restart-case
+                                 (error (make-comment-using-point
+                                         '|importしたシンボルは使われていない|
+                                         p
+                                         :import-name import-name))
+                               (edit ()
+                                     :report (lambda (stream)
+                                               (format stream
+                                                       "import-fromから~Aを削除する"
+                                                       import-name))
+                                     (push (list package-name import-name)
+                                           deleting-import-names)))))))
+             #+(or)
+             (loop :for (package-name import-name) :in deleting-import-names
+                   :do (find-import-name form-point package-name import-name)
+                   ))))))
+    (unless seen-defpackage
+      (error (make-condition '|defpackageが存在しない|)))))
 
 ;;;
 (define-condition sblint-comment (comment)
@@ -164,7 +165,8 @@
          (text
            (with-output-to-string (stream)
              (sblint:run-lint-file file stream))))
-    (ppcre:do-register-groups (line-number column description) ("[^:]*:(\\d*):(\\d*):([^\\n]*)" text)
+    (ppcre:do-register-groups (line-number column description)
+        ("[^:]*:(\\d*):(\\d*):([^\\n]*)" text)
       (reporter-restart-case
           (error (make-condition 'sblint-comment
                                  :file file
