@@ -134,10 +134,7 @@
              (setq package-info
                    (make-package-info
                     :name package-name
-                    :import-from-list (dolist (elt import-from-list import-from-list)
-                                        (setf (cdr elt)
-                                              (delete-duplicates (cdr elt)
-                                                                 :test #'string=)))))
+                    :import-from-list import-from-list))
              (loop :for (package-name . import-names) :in (package-info-import-from-list package-info)
                    :do (dolist (import-name import-names)
                          (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
