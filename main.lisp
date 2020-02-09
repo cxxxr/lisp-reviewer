@@ -180,8 +180,16 @@
                          defpackage-reviewer)
   ())
 
+(defun find-file-buffer (pathname)
+  (let ((buffer (lem-base:make-buffer (format nil "reviewer ~S" pathname)
+                                      :temporary t
+                                      :enable-undo-p t
+                                      :syntax-table lem-lisp-syntax:*syntax-table*)))
+    (lem:insert-file-contents (lem:buffer-point buffer) pathname)
+    buffer))
+
 (defun review-file (reviewer pathname)
-  (let* ((buffer (lem-base:find-file-buffer pathname :temporary t :enable-undo-p nil))
+  (let* ((buffer (find-file-buffer pathname))
          (point (lem-base:buffer-point buffer)))
     (review reviewer point)
     (when (lem-base:buffer-modified-p buffer)
