@@ -8,4 +8,4 @@
 (in-package :foo)
 
 (defun hoge (x)
-  x)
+  )

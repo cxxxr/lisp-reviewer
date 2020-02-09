@@ -194,3 +194,10 @@
     (review reviewer point)
     (when (lem-base:buffer-modified-p buffer)
       (lem-base:write-to-file buffer (lem-base:buffer-filename buffer)))))
+
+(defun test ()
+  (handler-bind ((comment (lambda (c)
+                            (format t "~&~A~&" c)
+                            (invoke-restart (find-restart 'ignore)))))
+    (review-file (make-instance 'defpackage-reviewer)
+                 (asdf:system-relative-pathname :reviewer "example.lisp"))))
