@@ -155,7 +155,12 @@
 
 ;;;
 (define-condition sblint-comment (comment)
-  ())
+  ((description
+    :initarg :description
+    :reader sblint-comment-description)))
+
+(defmethod write-comment-message ((comment sblint-comment) stream)
+  (write-string (sblint-comment-description comment) stream))
 
 (defclass sblint-reviewer (reviewer)
   ())
