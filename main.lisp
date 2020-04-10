@@ -111,7 +111,7 @@
     (lem-base:buffer-start p)
     (loop
       (multiple-value-bind (form form-point)
-          (read-form point)
+          (read-form p)
         (unless (eq 'defpackage (first form))
           (return))
         (unless form-point
