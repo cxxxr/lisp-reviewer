@@ -146,10 +146,14 @@
                                                        import-name))
                                      (push (list package-name import-name)
                                            deleting-import-names)))))))
-             #+(or)
              (loop :for (package-name import-name) :in deleting-import-names
-                   :do (find-import-name form-point package-name import-name)
-                   ))))))
+                   :do (lem-base:with-point ((p form-point))
+                         (when (find-import-name p package-name import-name)
+                           (forward-delete-form p)
+                           (delete-forward-spaces p)
+                           (when (eql (lem-base:character-at p) #\))
+                             (lem-base:skip-whitespace-backward p)
+                             (delete-forward-spaces p))))))))))
     (unless seen-defpackage
       (error (make-condition '|defpackageが存在しない|)))))
 
@@ -186,15 +190,15 @@
   ())
 
 (defun review-file (reviewer pathname)
-  (let* ((buffer (lem:find-file-buffer pathname
-                                       :temporary t
-                                       :enable-undo-p nil
-                                       :syntax-table lem-lisp-syntax:*syntax-table*))
+  (let* ((buffer (lem-base:find-file-buffer pathname
+                                            :temporary t
+                                            :enable-undo-p nil
+                                            :syntax-table lem-lisp-syntax:*syntax-table*))
          (point (lem-base:buffer-point buffer)))
     (review reviewer point)
-    #+(or)
     (when (lem-base:buffer-modified-p buffer)
-      (lem-base:write-to-file buffer (lem-base:buffer-filename buffer)))))
+      (lem-base:write-to-file buffer (lem-base:buffer-filename buffer)))
+    buffer))
 
 (defun review-system (reviewer system-name)
   (dolist (pathname (sblint/utilities/asdf:all-project-pathnames-for-package-inferred-system system-name))
