@@ -106,13 +106,29 @@
         (lem-base:form-offset point -1)
         (return point)))))
 
+(defun search-symbol-name-in-package (symbol-name point)
+  (lem-base:with-point ((p point))
+    (lem-base:buffer-start p)
+    (loop
+      (multiple-value-bind (form form-point)
+          (read-form point)
+        (unless (eq 'defpackage (first form))
+          (return))
+        (unless form-point
+          (return-from search-symbol-name-in-package nil))))
+    (lem-base:search-forward-symbol p symbol-name)))
+
+(defun use-symbol-in-file-p (package-name import-name point)
+  (or (member (get-file-from-point point)
+              (xrefs (format nil "~A::~A" package-name import-name)) :test #'uiop:pathname-equal)
+      (search-symbol-name-in-package import-name point)))
+
 (defmethod review progn ((reviewer defpackage-reviewer) point)
   ;; - [X] defpackageが無い、または複数ある
   ;; - [ ] import-fromに重複するシンボルがある、パッケージ指定が重複している場合は一つにまとめる
   ;; - [ ] import-fromに存在しないパッケージ、シンボルがある
   ;; - [X] import-fromで使っていないシンボルをimportしている
-  (let ((seen-defpackage nil)
-        (file (get-file-from-point point)))
+  (let ((seen-defpackage nil))
     (lem-base:buffer-start point)
     (loop
       (multiple-value-bind (form form-point)
@@ -131,7 +147,7 @@
                  (deleting-import-names '()))
              (loop :for (package-name . import-names) :in import-from-list
                    :do (dolist (import-name import-names)
-                         (unless (member file (xrefs (format nil "~A::~A" package-name import-name)) :test #'uiop:pathname-equal)
+                         (unless (use-symbol-in-file-p package-name import-name point)
                            (lem-base:with-point ((p form-point))
                              (find-import-name p package-name import-name)
                              (reporter-restart-case
