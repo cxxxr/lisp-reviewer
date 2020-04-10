@@ -47,6 +47,8 @@
                   :do (destructuring-bind (ref-name location) definition
                         (declare (ignore ref-name))
                         (alexandria:destructuring-ecase location
+                          ((:error _message)
+                           (declare (ignore _message)))
                           ((:location location _position _hints)
                            (declare (ignore _position _hints))
                            (alexandria:destructuring-case location
