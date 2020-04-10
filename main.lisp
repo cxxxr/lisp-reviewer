@@ -226,3 +226,12 @@
                             (invoke-restart (find-restart 'ignore)))))
     (review-file (make-instance 'defpackage-reviewer)
                  (asdf:system-relative-pathname :reviewer "example.lisp"))))
+
+(defun remove-unused-import-symbols (filename &key (ask t))
+  (handler-bind ((comment (lambda (c)
+                            (declare (ignore c))
+                            (unless ask
+                              (let ((restart (find-restart 'edit)))
+                                (when restart
+                                  (invoke-restart restart)))))))
+    (review-file (make-instance 'defpackage-reviewer) filename)))
