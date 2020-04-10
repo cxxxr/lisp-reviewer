@@ -131,7 +131,7 @@
                  (deleting-import-names '()))
              (loop :for (package-name . import-names) :in import-from-list
                    :do (dolist (import-name import-names)
-                         (unless (member file (xrefs import-name) :test #'uiop:pathname-equal)
+                         (unless (member file (xrefs (format nil "~A::~A" package-name import-name)) :test #'uiop:pathname-equal)
                            (lem-base:with-point ((p form-point))
                              (find-import-name p package-name import-name)
                              (reporter-restart-case
