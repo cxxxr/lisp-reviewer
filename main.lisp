@@ -20,13 +20,6 @@
                          defpackage-reviewer)
   ())
 
-(defun test ()
-  (handler-bind ((comment (lambda (c)
-                            (format t "~&~A~&" c)
-                            (invoke-restart (find-restart 'ignore)))))
-    (review-file (make-instance 'defpackage-reviewer)
-                 (asdf:system-relative-pathname :lisp-reviewer "sample/sample-1.lisp"))))
-
 (defun remove-unused-import-symbols (filename &key (ask t))
   (handler-bind ((comment (lambda (c)
                             (declare (ignore c))
