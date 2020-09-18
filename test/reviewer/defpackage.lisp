@@ -16,13 +16,15 @@
                        (push c conditions)
                        (invoke-restart (find-restart 'lisp-reviewer/restart:ignore)))))
       (review-file (make-instance 'defpackage-reviewer) file))
-    (let ((test-functions
-            (list (lambda (c)
-                    (ok (typep c 'unused-imported-symbol))
-                    (ok (= 4 (comment-line-number c)))
-                    (ok (= 16 (comment-column c)))
-                    (ok (uiop:pathname-equal file (comment-file c)))))))
-      (ok (= (length conditions) (length test-functions)))
-      (loop :for c :in (nreverse conditions)
-            :for test-function :in test-functions
-            :do (funcall test-function c)))))
+    (let ((expected-conditions
+            (list (make-condition 'unused-imported-symbol
+                                  :line-number 4
+                                  :column 16
+                                  :file file)
+                  (make-condition 'unused-imported-symbol
+                                  :line-number 6
+                                  :column 16
+                                  :file file))))
+      (ok (alexandria:set-equal conditions
+                                expected-conditions
+                                :test #'comment-equal)))))
