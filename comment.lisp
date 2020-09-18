@@ -1,6 +1,9 @@
 (defpackage :lisp-reviewer/comment
   (:use :cl)
   (:export :comment
+           :comment-line-number
+           :comment-column
+           :comment-file
            :write-comment-location
            :write-comment-message))
 (in-package :lisp-reviewer/comment)
