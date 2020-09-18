@@ -7,14 +7,9 @@
   (:use :cl
         :lisp-reviewer/utilities
         :lisp-reviewer/comment
+        :lisp-reviewer/restart
         :lisp-reviewer/reviewer))
 (in-package :lisp-reviewer/main)
-
-(defmacro reporter-restart-case (expression &body clauses)
-  `(restart-case ,expression
-     (ignore ()
-       :report "このレポートを無視する")
-     ,@clauses))
 
 (defun make-comment-using-point (type point &rest args)
   (apply #'make-condition type
@@ -36,7 +31,7 @@
       ((list 'in-package package-name)
        (alexandria:when-let (package (find-package package-name))
          (when (string= (package-name package) "COMMON-LISP-USER")
-           (reporter-restart-case
+           (with-ignorable-restart-case
                (error (make-comment-using-point
                        '|先頭に(in-package :cl-user)が存在する|
                        form-point))
@@ -138,7 +133,7 @@
           ((list* 'defpackage _ options)
            (if seen-defpackage
                ;; TODO: 片方を消すなどの変更案をリスタートにする
-               (reporter-restart-case
+               (with-ignorable-restart-case
                    (error (make-comment-using-point
                            '|一つのファイルにdefpackageが複数存在する|
                            form-point)))
@@ -150,7 +145,7 @@
                          (unless (use-symbol-in-file-p package-name import-name point)
                            (lem-base:with-point ((p form-point))
                              (find-import-name p package-name import-name)
-                             (reporter-restart-case
+                             (with-ignorable-restart-case
                                  (error (make-comment-using-point
                                          '|importしたシンボルは使われていない|
                                          p
@@ -192,7 +187,7 @@
              (sblint:run-lint-file file stream))))
     (ppcre:do-register-groups (line-number column description)
         ("[^:]*:(\\d*):(\\d*):([^\\n]*)" text)
-      (reporter-restart-case
+      (with-ignorable-restart-case
           (error (make-condition 'sblint-comment
                                  :file file
                                  :line-number line-number
