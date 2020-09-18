@@ -4,6 +4,7 @@
            :comment-line-number
            :comment-column
            :comment-file
+           :comment-equal
            :write-comment-location
            :write-comment-message))
 (in-package :lisp-reviewer/comment)
@@ -20,6 +21,12 @@
   (:report (lambda (condition stream)
              (write-comment-message condition stream)
              (terpri stream))))
+
+(defun comment-equal (comment1 comment2)
+  (and (eq (type-of comment1) (type-of comment2))
+       (= (comment-line-number comment1) (comment-line-number comment2))
+       (= (comment-column comment1) (comment-column comment2))
+       (uiop:pathname-equal (comment-file comment1) (comment-file comment2))))
 
 (defun write-comment-location (comment stream)
   (format stream "~A:~D:~D:"
