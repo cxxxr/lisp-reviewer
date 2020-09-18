@@ -21,4 +21,5 @@ jobs:
     - name: Run test
       run: |
         export PATH=$HOME/.roswell/bin:$PATH
-        ros -s sblint -s rove -e '(uiop:quit (if (rove:run :lisp-reviewer/test) 0 1))'
+        ros install cxxxr/sblint
+        ros -s rove -s lisp-reviewer -s lisp-reviewer/test -e '(uiop:quit (if (rove:run :lisp-reviewer/test) 0 1))'
