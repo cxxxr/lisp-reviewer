@@ -14,7 +14,7 @@
     (handler-bind ((comment
                      (lambda (c)
                        (push c conditions)
-                       (invoke-restart (find-restart 'lisp-reviewer/restart:ignore)))))
+                       (invoke-restart (find-restart 'ignore)))))
       (review-file (make-instance 'defpackage-reviewer) file))
     (let ((expected-conditions
             (list (make-condition 'unused-imported-symbol
