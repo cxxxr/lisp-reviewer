@@ -1,5 +1,8 @@
 (defpackage :lisp-reviewer/reviewer
   (:use :cl)
+  (:import-from :lem-base)
+  (:import-from :lem-lisp-syntax)
+  (:import-from :sblint)
   (:export :review
            :reviewer
            :review-file
