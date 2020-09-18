@@ -9,7 +9,7 @@
 (in-package :lisp-reviewer/test/reviewer/defpackage)
 
 (deftest defpackage-reviewer
-  (let ((file (sample-file "sample-1.lisp"))
+  (let ((file (sample-file "defpackage-reviewer-sample-1.lisp"))
         (conditions '()))
     (handler-bind ((comment
                      (lambda (c)
@@ -19,7 +19,7 @@
     (let ((test-functions
             (list (lambda (c)
                     (ok (typep c 'unused-imported-symbol))
-                    (ok (= 5 (comment-line-number c)))
+                    (ok (= 4 (comment-line-number c)))
                     (ok (= 16 (comment-column c)))
                     (ok (uiop:pathname-equal file (comment-file c)))))))
       (ok (= (length conditions) (length test-functions)))
