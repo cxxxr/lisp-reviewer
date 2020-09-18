@@ -6,7 +6,8 @@
            :forward-delete-form
            :delete-forward-spaces
            :get-file-from-point
-           :xrefs))
+           :xrefs
+           :make-comment-using-point))
 (in-package :lisp-reviewer/utilities)
 
 (defun read-form (point)
@@ -58,3 +59,10 @@
                               (declare (ignore _buffer))
                               (push file files)))))))
         :finally (return files)))
+
+(defun make-comment-using-point (type point &rest args)
+  (apply #'make-condition type
+         :line-number (lem-base:line-number-at-point point)
+         :column (lem-base:point-column point)
+         :file (get-file-from-point point)
+         args))

@@ -11,13 +11,6 @@
         :lisp-reviewer/reviewer))
 (in-package :lisp-reviewer/main)
 
-(defun make-comment-using-point (type point &rest args)
-  (apply #'make-condition type
-         :line-number (lem-base:line-number-at-point point)
-         :column (lem-base:point-column point)
-         :file (get-file-from-point point)
-         args))
-
 ;;;
 (define-condition |先頭に(in-package :cl-user)が存在する| (comment) ())
 
