@@ -1,9 +1,9 @@
-(defpackage :reviewer/comment
+(defpackage :lisp-reviewer/comment
   (:use :cl)
   (:export :comment
            :write-comment-location
            :write-comment-message))
-(in-package :reviewer/comment)
+(in-package :lisp-reviewer/comment)
 
 (defgeneric write-comment-message (comment stream))
 

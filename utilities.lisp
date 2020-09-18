@@ -1,4 +1,4 @@
-(defpackage :reviewer/utilities
+(defpackage :lisp-reviewer/utilities
   (:use :cl)
   (:import-from :lem-base)
   (:export :read-form
@@ -7,7 +7,7 @@
            :delete-forward-spaces
            :get-file-from-point
            :xrefs))
-(in-package :reviewer/utilities)
+(in-package :lisp-reviewer/utilities)
 
 (defun read-form (point)
   (lem-base:skip-space-and-comment-forward point)

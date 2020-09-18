@@ -1,14 +1,14 @@
-(defpackage :reviewer/main
+(defpackage :lisp-reviewer/main
   (:nicknames :reviewer)
   (:import-from :lem)
   (:import-from :sblint)
   (:import-from :cl-ppcre)
   (:import-from :trivia)
   (:use :cl
-        :reviewer/utilities
-        :reviewer/comment
-        :reviewer/reviewer))
-(in-package :reviewer/main)
+        :lisp-reviewer/utilities
+        :lisp-reviewer/comment
+        :lisp-reviewer/reviewer))
+(in-package :lisp-reviewer/main)
 
 (defmacro reporter-restart-case (expression &body clauses)
   `(restart-case ,expression
@@ -225,7 +225,7 @@
                             (format t "~&~A~&" c)
                             (invoke-restart (find-restart 'ignore)))))
     (review-file (make-instance 'defpackage-reviewer)
-                 (asdf:system-relative-pathname :reviewer "sample/sample-1.lisp"))))
+                 (asdf:system-relative-pathname :lisp-reviewer "sample/sample-1.lisp"))))
 
 (defun remove-unused-import-symbols (filename &key (ask t))
   (handler-bind ((comment (lambda (c)
