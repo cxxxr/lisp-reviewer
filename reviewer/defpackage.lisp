@@ -6,17 +6,18 @@
                 :with-ignorable-restart-case)
   (:import-from :lisp-reviewer/comment
                 :comment)
-  (:export :defpackage-reviewer))
+  (:export :unused-imported-symbol
+           :defpackage-reviewer))
 (in-package :lisp-reviewer/reviewer/defpackage)
 
 (define-condition |一つのファイルにdefpackageが複数存在する| (comment) ())
 (define-condition |defpackageが存在しない| (comment) ())
-(define-condition |importしたシンボルは使われていない| (comment)
+(define-condition unused-imported-symbol (comment)
   ((import-name
     :initarg :import-name
     :reader comment-import-name)))
 
-(defmethod write-comment-message ((comment |importしたシンボルは使われていない|) stream)
+(defmethod write-comment-message ((comment unused-imported-symbol) stream)
   (format stream "importした~Aは使われていません" (comment-import-name comment)))
 
 (defclass defpackage-reviewer (reviewer) ())
@@ -115,7 +116,7 @@
                              (find-import-name p package-name import-name)
                              (with-ignorable-restart-case
                                  (error (make-comment-using-point
-                                         '|importしたシンボルは使われていない|
+                                         'unused-imported-symbol
                                          p
                                          :import-name import-name))
                                (edit ()

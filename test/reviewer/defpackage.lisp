@@ -18,7 +18,7 @@
       (review-file (make-instance 'defpackage-reviewer) file))
     (let ((test-functions
             (list (lambda (c)
-                    (ok (typep c 'LISP-REVIEWER/REVIEWER/DEFPACKAGE::|importしたシンボルは使われていない|))
+                    (ok (typep c 'unused-imported-symbol))
                     (ok (= 5 (comment-line-number c)))
                     (ok (= 16 (comment-column c)))
                     (ok (uiop:pathname-equal file (comment-file c)))))))
