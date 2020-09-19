@@ -14,7 +14,6 @@
         :lisp-reviewer/reviewer/sblint))
 (in-package :lisp-reviewer/main)
 
-;;;
 (defclass main-reviewer (sblint-reviewer
                          header-in-package-reviewer
                          defpackage-reviewer)
