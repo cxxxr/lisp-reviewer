@@ -1,0 +1,2 @@
+(defpackage foo)
+(defpackage bar)

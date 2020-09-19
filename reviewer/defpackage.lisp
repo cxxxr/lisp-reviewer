@@ -5,17 +5,17 @@
         :lisp-reviewer/reviewer)
   (:import-from :lisp-reviewer/restart
                 :with-ignorable-restart-case)
-  (:export :unused-imported-symbol
+  (:export :multiple-defpackages-in-one-file
+           :defpackage-does-not-exist
+           :unused-imported-symbol
            :defpackage-reviewer))
 (in-package :lisp-reviewer/reviewer/defpackage)
 
 (define-condition multiple-defpackages-in-one-file (comment) ())
-
 (defmethod write-comment-message ((comment multiple-defpackages-in-one-file) stream)
   (write-string "一つのファイルにdefpackageが複数存在する" stream))
 
 (define-condition defpackage-does-not-exist (comment) ())
-
 (defmethod write-comment-message ((comment defpackage-does-not-exist) stream)
   (write-string "defpackageが存在しない" stream))
 
@@ -23,7 +23,6 @@
   ((import-name
     :initarg :import-name
     :reader comment-import-name)))
-
 (defmethod write-comment-message ((comment unused-imported-symbol) stream)
   (format stream "importした~Aは使われていません" (comment-import-name comment)))
 

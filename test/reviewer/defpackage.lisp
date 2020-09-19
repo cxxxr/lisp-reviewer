@@ -8,28 +8,46 @@
                 :sample-file))
 (in-package :lisp-reviewer/test/reviewer/defpackage)
 
-(deftest defpackage-reviewer
-  (let ((file (sample-file "defpackage-reviewer-sample-1.lisp"))
-        (conditions '()))
+(defun test (reviewer file)
+  (let ((conditions '()))
     (handler-bind ((comment
                      (lambda (c)
                        (push c conditions)
                        (invoke-restart (find-restart 'ignore)))))
-      (review-file (make-instance 'defpackage-reviewer) file))
-    (let ((expected-conditions
-            (list (make-condition 'unused-imported-symbol
-                                  :line-number 4
-                                  :column 16
-                                  :file file
-                                  :import-name 'scan)
-                  (make-condition 'unused-imported-symbol
-                                  :line-number 6
-                                  :column 16
-                                  :file file
-                                  :import-name 'when-let))))
-      (ok (alexandria:set-equal conditions
-                                expected-conditions
-                                :test #'comment-equal))
-      (ok (alexandria:set-equal (mapcar #'princ-to-string conditions)
-                                (mapcar #'princ-to-string expected-conditions)
-                                :test #'string=)))))
+      (review-file reviewer file))
+    conditions))
+
+(defun equals-comments (expected-comments actual-comments)
+  (ok (alexandria:set-equal actual-comments
+                            expected-comments
+                            :test #'comment-equal))
+  (ok (alexandria:set-equal (mapcar #'princ-to-string actual-comments)
+                            (mapcar #'princ-to-string expected-comments)
+                            :test #'string=)))
+
+(deftest unused-imported-symbol
+  (let* ((file (sample-file "defpackage-reviewer-sample-1.lisp"))
+         (conditions (test (make-instance 'defpackage-reviewer) file))
+         (expected-conditions
+           (list (make-condition 'unused-imported-symbol
+                                 :line-number 4
+                                 :column 16
+                                 :file file
+                                 :import-name 'scan)
+                 (make-condition 'unused-imported-symbol
+                                 :line-number 6
+                                 :column 16
+                                 :file file
+                                 :import-name 'when-let))))
+    (ok (equals-comments conditions expected-conditions))))
+
+(deftest multiple-defpackages-in-one-file
+  (let* ((file (sample-file "defpackage-reviewer-sample-2.lisp"))
+         (conditions (test (make-instance 'defpackage-reviewer) file))
+         (expected-conditions
+           (list (make-instance 'multiple-defpackages-in-one-file
+                                :line-number 2
+                                :column 0
+                                :file file))))
+    (ok (equals-comments expected-conditions
+                         conditions))))
