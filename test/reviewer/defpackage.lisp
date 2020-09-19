@@ -51,3 +51,12 @@
                                 :file file))))
     (ok (equals-comments expected-conditions
                          conditions))))
+
+(deftest defpackage-does-not-exist
+  (let* ((file (sample-file "defpackage-reviewer-sample-3.lisp"))
+         (conditions (test (make-instance 'defpackage-reviewer) file))
+         (expected-conditions
+           (list (make-condition 'defpackage-does-not-exist
+                                 :file file))))
+    (ok (equals-comments expected-conditions
+                         conditions))))

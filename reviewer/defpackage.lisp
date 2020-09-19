@@ -141,4 +141,6 @@
                              (lem-base:skip-whitespace-backward p)
                              (delete-forward-spaces p))))))))))
     (unless seen-defpackage
-      (error (make-condition 'defpackage-does-not-exist)))))
+      (with-ignorable-restart-case
+          (error 'defpackage-does-not-exist
+                 :file (get-file-from-point point))))))
