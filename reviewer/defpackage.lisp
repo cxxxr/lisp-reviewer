@@ -1,11 +1,10 @@
 (defpackage :lisp-reviewer/reviewer/defpackage
   (:use :cl
+        :lisp-reviewer/comment
         :lisp-reviewer/utilities
         :lisp-reviewer/reviewer)
   (:import-from :lisp-reviewer/restart
                 :with-ignorable-restart-case)
-  (:import-from :lisp-reviewer/comment
-                :comment)
   (:export :unused-imported-symbol
            :defpackage-reviewer))
 (in-package :lisp-reviewer/reviewer/defpackage)

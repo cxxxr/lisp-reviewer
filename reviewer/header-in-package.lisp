@@ -1,11 +1,10 @@
 (defpackage :lisp-reviewer/reviewer/header-in-package
-  (:use :cl)
+  (:use :cl
+        :lisp-reviewer/comment)
   (:import-from :lisp-reviewer/reviewer
                 :reviewer)
   (:import-from :lisp-reviewer/restart
                 :with-ignorable-restart-case)
-  (:import-from :lisp-reviewer/comment
-                :comment)
   (:import-from :lisp-reviewer/utilities
                 :read-form
                 :backward-delete-form

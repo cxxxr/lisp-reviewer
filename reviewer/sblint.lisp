@@ -1,7 +1,6 @@
 (defpackage :lisp-reviewer/reviewer/sblint
-  (:use :cl)
-  (:import-from :lisp-reviewer/comment
-                :comment)
+  (:use :cl
+        :lisp-reviewer/comment)
   (:import-from :lisp-reviewer/reviewer
                 :reviewer)
   (:import-from :lisp-reviewer/restart
