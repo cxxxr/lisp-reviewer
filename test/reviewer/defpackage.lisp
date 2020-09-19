@@ -20,11 +20,16 @@
             (list (make-condition 'unused-imported-symbol
                                   :line-number 4
                                   :column 16
-                                  :file file)
+                                  :file file
+                                  :import-name 'scan)
                   (make-condition 'unused-imported-symbol
                                   :line-number 6
                                   :column 16
-                                  :file file))))
+                                  :file file
+                                  :import-name 'when-let))))
       (ok (alexandria:set-equal conditions
                                 expected-conditions
-                                :test #'comment-equal)))))
+                                :test #'comment-equal))
+      (ok (alexandria:set-equal (mapcar #'princ-to-string conditions)
+                                (mapcar #'princ-to-string expected-conditions)
+                                :test #'string=)))))
