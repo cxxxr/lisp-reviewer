@@ -95,6 +95,7 @@
 
 (defmethod review progn ((reviewer defpackage-reviewer) point)
   ;; - [X] defpackageが無い、または複数ある
+  ;; - [ ] defpackageが存在しない場合、新しく定義するeditリスタートを用意する
   ;; - [ ] import-fromに重複するシンボルがある、パッケージ指定が重複している場合は一つにまとめる
   ;; - [ ] import-fromに存在しないパッケージ、シンボルがある
   ;; - [X] import-fromで使っていないシンボルをimportしている
@@ -141,4 +142,6 @@
                              (lem-base:skip-whitespace-backward p)
                              (delete-forward-spaces p))))))))))
     (unless seen-defpackage
-      (error (make-condition 'defpackage-does-not-exist)))))
+      (with-ignorable-restart-case
+          (error 'defpackage-does-not-exist
+                 :file (get-file-from-point point))))))

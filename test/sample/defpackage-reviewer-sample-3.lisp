@@ -1,0 +1,2 @@
+(defun hello ()
+  10)
