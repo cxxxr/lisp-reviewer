@@ -13,7 +13,10 @@
   (:export :header-in-package-reviewer))
 (in-package :lisp-reviewer/reviewer/header-in-package)
 
-(define-condition |先頭に(in-package :cl-user)が存在する| (comment) ())
+(define-condition stupid-cl-user-package-initialization (comment) ())
+
+(defmethod write-comment-message ((comment stupid-cl-user-package-initialization) stream)
+  (write-string "先頭に(in-package :cl-user)が存在する" stream))
 
 (defclass header-in-package-reviewer (reviewer) ())
 
@@ -27,7 +30,7 @@
          (when (string= (package-name package) "COMMON-LISP-USER")
            (with-ignorable-restart-case
                (error (make-comment-using-point
-                       '|先頭に(in-package :cl-user)が存在する|
+                       'stupid-cl-user-package-initialization
                        form-point))
              (edit ()
                    :report "このフォームを削除する"

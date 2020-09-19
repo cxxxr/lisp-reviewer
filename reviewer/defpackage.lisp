@@ -10,8 +10,16 @@
            :defpackage-reviewer))
 (in-package :lisp-reviewer/reviewer/defpackage)
 
-(define-condition |一つのファイルにdefpackageが複数存在する| (comment) ())
-(define-condition |defpackageが存在しない| (comment) ())
+(define-condition multiple-defpackages-in-one-file (comment) ())
+
+(defmethod write-comment-message ((comment multiple-defpackages-in-one-file) stream)
+  (write-string "一つのファイルにdefpackageが複数存在する" stream))
+
+(define-condition defpackage-does-not-exist (comment) ())
+
+(defmethod write-comment-message ((comment defpackage-does-not-exist) stream)
+  (write-string "defpackageが存在しない" stream))
+
 (define-condition unused-imported-symbol (comment)
   ((import-name
     :initarg :import-name
@@ -104,7 +112,7 @@
                ;; TODO: 片方を消すなどの変更案をリスタートにする
                (with-ignorable-restart-case
                    (error (make-comment-using-point
-                           '|一つのファイルにdefpackageが複数存在する|
+                           'multiple-defpackages-in-one-file
                            form-point)))
                (setf seen-defpackage t))
            (let ((import-from-list (normalize-import-from options))
@@ -135,4 +143,4 @@
                              (lem-base:skip-whitespace-backward p)
                              (delete-forward-spaces p))))))))))
     (unless seen-defpackage
-      (error (make-condition '|defpackageが存在しない|)))))
+      (error (make-condition 'defpackage-does-not-exist)))))
