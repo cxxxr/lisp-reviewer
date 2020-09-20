@@ -82,7 +82,8 @@
     (loop
       (multiple-value-bind (form form-point)
           (read-form p)
-        (unless (eq 'defpackage (first form))
+        (when (eq 'defpackage (first form))
+          (lem-base:form-offset p 1)
           (return))
         (unless form-point
           (return-from search-symbol-name-in-package nil))))
