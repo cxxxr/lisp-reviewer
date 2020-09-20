@@ -89,8 +89,9 @@
     (lem-base:search-forward-symbol p symbol-name)))
 
 (defun use-symbol-in-file-p (package-name import-name point)
-  (or (member (get-file-from-point point)
-              (xrefs (format nil "~A::~A" package-name import-name)) :test #'uiop:pathname-equal)
+  (or (find (get-file-from-point point)
+            (xrefs (format nil "~A::~A" package-name import-name))
+            :test #'uiop:pathname-equal)
       (search-symbol-name-in-package import-name point)))
 
 (defun multiple-defpackages-in-one-file-error (point)
