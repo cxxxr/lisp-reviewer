@@ -30,12 +30,12 @@
          (conditions (test (make-instance 'defpackage-reviewer) file))
          (expected-conditions
            (list (make-condition 'unused-imported-symbol
-                                 :line-number 4
+                                 :line-number 5
                                  :column 16
                                  :file file
                                  :import-name 'scan)
                  (make-condition 'unused-imported-symbol
-                                 :line-number 6
+                                 :line-number 7
                                  :column 16
                                  :file file
                                  :import-name 'when-let))))
