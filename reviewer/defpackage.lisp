@@ -93,6 +93,13 @@
               (xrefs (format nil "~A::~A" package-name import-name)) :test #'uiop:pathname-equal)
       (search-symbol-name-in-package import-name point)))
 
+(defun multiple-defpackages-in-one-file-error (point)
+  ;; TODO: 片方を消すなどの変更案をリスタートにする
+  (with-ignorable-restart-case
+      (error (make-comment-using-point
+              'multiple-defpackages-in-one-file
+              point))))
+
 (defmethod review progn ((reviewer defpackage-reviewer) point)
   ;; - [X] defpackageが無い、または複数ある
   ;; - [ ] defpackageが存在しない場合、新しく定義するeditリスタートを用意する
@@ -108,11 +115,7 @@
         (trivia:match form
           ((list* 'defpackage _ options)
            (if seen-defpackage
-               ;; TODO: 片方を消すなどの変更案をリスタートにする
-               (with-ignorable-restart-case
-                   (error (make-comment-using-point
-                           'multiple-defpackages-in-one-file
-                           form-point)))
+               (multiple-defpackages-in-one-file-error form-point)
                (setf seen-defpackage t))
            (let ((import-from-list (normalize-import-from options))
                  (deleting-import-names '()))
