@@ -1,6 +1,7 @@
 (defsystem "lisp-reviewer"
   :class :package-inferred-system
-  :depends-on ("lisp-reviewer/main"))
+  :depends-on ("lisp-reviewer/main")
+  :in-order-to ((test-op (test-op "lisp-reviewer/test"))))
 
 (defsystem "lisp-reviewer/test"
   :class :package-inferred-system
